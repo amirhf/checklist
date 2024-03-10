@@ -8,21 +8,27 @@ function ChecklistBuilder() {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [checklistVisible, setChecklistVisible] = useState(false);
 
-  // Load templates from localStorage on component mount
   useEffect(() => {
     const storedTemplates = Object.entries(localStorage)
-      .reduce((acc, [key, value]) => {
+      .filter(([key, value]) => {
         try {
-          acc[key] = JSON.parse(value) as ChecklistItem[];
-          return acc;
+          const parsedValue = JSON.parse(value) as ChecklistItem[];
+          return (
+            Array.isArray(parsedValue) &&
+            parsedValue.every((item) => item.hasOwnProperty("text"))
+          );
         } catch (error) {
-          // Skip non-template items in localStorage
-          return acc;
+          return false;
         }
+      })
+      .reduce((acc, [key, value]) => {
+        acc[key] = JSON.parse(value) as ChecklistItem[];
+        return acc;
       }, {} as Record<string, ChecklistItem[]>);
 
     setTemplates(storedTemplates);
   }, []);
+
   const checklistRef = useRef<HTMLUListElement>(null); // Ref for the checklist <ul>
 
   const handleResetChecklist = () => {
